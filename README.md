@@ -1,0 +1,195 @@
+# 📘 IRAG 知识库与检索接口说明
+
+> 保险领域多模态知识库（Insurance RAG）  
+> 由团队成员开发，用于保险条款文档的结构化解析、向量化存储与语义检索。
+
+---
+
+## 🚀 一、项目概览
+
+本项目实现了一个基于 **Milvus 向量数据库 + LangChain 风格接口** 的保险知识库。  
+支持 **PDF 文档解析、表格抽取、向量嵌入与语义检索**。  
+问答模块的同学可直接通过函数调用方式使用 RAG 检索能力。
+
+---
+
+## 🧩 二、目录结构
+
+```
+IRAG/
+├── config/              # 全局配置（数据库、模型路径等）
+│   └── settings.py
+│
+├── ingestion/           # 数据导入与索引构建
+│   ├── loader.py        # 扫描 PDF 文档
+│   ├── parser.py        # 文本与表格解析
+│   ├── chunker.py       # 文本分块与结构化
+│   └── indexer.py       # 向量化 & 批量写入 Milvus
+│
+├── embedding/           # 向量嵌入模块
+│   └── embedder.py      # SentenceTransformer 封装
+│
+├── storage/             # 向量数据库接口层
+│   └── milvus_store.py  # Milvus 向量存储与检索封装
+│
+├── retrieval/           # 检索接口（问答模块调用入口）
+│   └── retriever.py     # RAGInterface：统一查询接口
+│
+├── scripts/             # 命令行脚本
+│   └── build_index.py   # 构建索引入口
+│
+└── sourcepdf/           # 原始保险公司 PDF 文档
+    └── AIA/accident/... 等子目录
+```
+
+---
+
+## ⚙️ 三、环境与依赖
+
+### ✅ 推荐运行环境
+
+| 组件       | 版本/说明                  |
+| ---------- | -------------------------- |
+| Python     | 3.10+                      |
+| CUDA / GPU | 可选（用于加速 embedding） |
+| Milvus     | v2.6.x（Docker 部署）      |
+| uv         | 用于环境与包管理（推荐）   |
+
+---
+
+### 📦 安装步骤
+
+1. 在项目根目录创建虚拟环境（推荐使用 uv）：
+
+```bash
+uv venv
+uv pip install -r requirements.txt
+```
+
+2. 确保 Milvus 已在本地或服务器上运行（端口 19530）：
+
+```bash
+docker ps
+```
+
+应看到：
+
+```
+milvusdb/milvus:v2.6.x   Up   0.0.0.0:19530->19530/tcp
+```
+
+3. 启动项目环境：
+
+```bash
+uv run python
+```
+
+---
+
+## 🧠 四、索引构建
+
+1. 将保险文档放入：
+
+```
+sourcepdf/<公司名>/<险种>/
+```
+
+例如：
+
+```
+sourcepdf/AIA/accident/aia_accident_protect.pdf
+```
+
+2. 构建向量索引：
+
+```bash
+uv run python -m scripts.build_index
+```
+
+运行效果示例：
+
+```
+🚀 开始构建索引 ...
+Scanned 113 documents from sourcepdf
+⚡ 已写入 500 条，耗时 3.42s
+✅ 索引完成，共写入 3150 个文本块。
+```
+
+---
+
+## 🔍 五、RAG 检索接口使用
+
+问答模块无需直接操作 Milvus，只需使用以下接口：
+
+```python
+from retrieval.retriever import RAGInterface
+
+rag = RAGInterface()
+
+query = "意外医疗保险如何理赔？"
+results = rag.retrieve(query, top_k=3)
+
+for i, r in enumerate(results, 1):
+    print(f"{i}. [score={r['score']}] {r['text'][:200]} ...")
+```
+
+输出示例：
+
+```
+🔗 初始化 RAG 接口组件...
+1. [score=0.1423] 本保险保障被保险人因意外事故造成的伤害，且在保障期间内提出理赔申请...
+2. [score=0.1530] 被保险人应提供医生诊断报告、费用收据等理赔材料...
+3. [score=0.1601] 理赔金额不超过合同载明的最高限额...
+```
+
+---
+
+## 🧱 六、Milvus 管理命令
+
+查看所有 collection：
+
+```python
+from pymilvus import utility
+utility.list_collections()
+```
+
+删除旧 collection（如更新字段定义）：
+
+```cmd
+uv python run refresh
+```
+
+---
+
+## 💬 七、协作规范
+
+| 角色       | 职责                                                         |
+| ---------- | ------------------------------------------------------------ |
+| 知识库开发 | 负责 ingestion / storage / embedding 模块，维护数据结构与索引构建 |
+| 问答开发   | 调用 retriever.py 接口实现问答逻辑                           |
+| 前端开发   | 调用 Python 接口封装层或 API 层                              |
+| 测试同学   | 可调用 rag.retrieve() 检查索引与检索一致性                   |
+
+---
+
+## 📄 八、常见问题
+
+**Q：为什么新建的 collection 仍然是 max_length=2048？**  
+A：Milvus 不会自动更新 schema，请先运行refresh.py
+
+然后重新运行索引构建。
+
+**Q：为什么录入速度慢？**  
+A：已使用批量写入（batch_size=500），如仍慢，可调大批量或延迟 flush。
+
+---
+
+## 📬 九、维护信息
+
+| 模块                     | 负责人 | 备注                         |
+| ------------------------ | ------ | ---------------------------- |
+| 元数据导入               | tony   |                              |
+| 向量库开发 / Milvus 接入 | 洪诗语 | 负责 ingestion、storage 模块 |
+| 问答接口                 |        |                              |
+| 数据测试                 |        |                              |
+| 前端开发                 |        |                              |
