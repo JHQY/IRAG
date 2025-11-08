@@ -13,4 +13,4 @@ class Embedder:
         return np.array(self.model.encode(texts, convert_to_numpy=True, show_progress_bar=False),dtype=np.float32)
     
     def embed_query(self, query):
-        return np.array(self.model.encode([query], convert_to_numpy=True, show_progress_bar=False),dtype=np.float32)[0]()  # Load environment variables
+        return np.array(self.model.encode([query], convert_to_numpy=True, show_progress_bar=False),dtype=np.float32)[0]  # Load environment variables
