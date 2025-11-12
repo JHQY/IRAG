@@ -165,7 +165,7 @@ for i, r in enumerate(results, 1):
 文件路径
 
 ```
-IRAG/prompt_templates.py
+IRAG/prompt_template.py
 ```
 
 使用示例
