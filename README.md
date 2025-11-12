@@ -150,7 +150,38 @@ for i, r in enumerate(results, 1):
 
 ---
 
-## 🧱 七、Milvus 管理命令
+## 七、Prompt 模板与自动语言切换
+
+功能特点
+
+- 支持中英文自动识别
+- 支持多种回答风格：
+  - `"expert"`：专家型回答
+  - `"customer"`：客服型回答
+  - `"academic"`：学术型回答
+  - `"json"`：JSON 结构化输出
+- 可直接用于问答模块或前端 API 调用
+
+文件路径
+
+```
+IRAG/prompt_templates.py
+```
+
+使用示例
+
+```
+from prompt_templates import auto_build_prompt
+
+query = "意外医疗保险如何理赔？"
+ref_text = ["参考文本片段1", "参考文本片段2"]
+mode = "customer"
+
+prompt = auto_build_prompt(query, ref_text, mode=mode)
+print(prompt)
+```
+
+## 🧱 八、Milvus 管理命令
 
 查看所有 collection：
 
@@ -167,18 +198,18 @@ uv python run refresh
 
 ---
 
-## 💬 八、协作规范
+## 💬 九、协作规范
 
-| 角色       | 职责                                                              |
-| ---------- | ----------------------------------------------------------------- |
+| 角色       | 职责                                                         |
+| ---------- | ------------------------------------------------------------ |
 | 知识库开发 | 负责 ingestion / storage / embedding 模块，维护数据结构与索引构建 |
-| 问答开发   | 调用 retriever.py 接口实现问答逻辑                                |
-| 前端开发   | 调用 Python 接口封装层或 API 层                                   |
-| 测试同学   | 可调用 rag.retrieve() 检查索引与检索一致性                        |
+| 问答开发   | 调用 retriever.py 接口实现问答逻辑                           |
+| 前端开发   | 调用 Python 接口封装层或 API 层                              |
+| 测试同学   | 可调用 rag.retrieve() 检查索引与检索一致性                   |
 
 ---
 
-## 📄 九、常见问题
+## 📄 十、常见问题
 
 **Q：为什么新建的 collection 仍然是 max_length=2048？**  
 A：Milvus 不会自动更新 schema，请先运行 refresh.py
@@ -190,12 +221,13 @@ A：已使用批量写入（batch_size=500），如仍慢，可调大批量或�
 
 ---
 
-## 📬 十、维护信息
+## 📬 十一、维护信息
 
 | 模块                     | 负责人 | 备注                         |
 | ------------------------ | ------ | ---------------------------- |
 | 元数据导入               | tony   |                              |
 | 向量库开发 / Milvus 接入 | 洪诗语 | 负责 ingestion、storage 模块 |
 | 问答接口                 | 孙锐   | llm 调用                     |
+| Prompt 模块              | 张皓然 | prompt调整及切换逻辑         |
 | 数据测试                 |        |                              |
 | 前端开发                 |        |                              |
