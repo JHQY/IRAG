@@ -4,6 +4,7 @@ import time
 from typing import Any
 import traceback
 from retrieval.retriever import RAGInterface
+from prompt_template import auto_build_prompt
 
 class HttpsApi():
     def __init__(self, host, key, model, timeout=20, **kwargs):
@@ -70,9 +71,11 @@ if __name__ == "__main__":
         # print(f"{i}. [score={r['score']}] {r['text'][:200]} ...")
         ref_text.append(r['text']+'\n')
 
-    prompt = query+'\n'+\
-             ' Please refer to the following text for your response.\n' +\
-             ''.join(ref_text)
+    # 选择风格模板（'expert'、'customer'、'academic'、'json'）
+    mode = "expert"
+
+    # 自动判断语言，生成对应语言 prompt
+    prompt = auto_build_prompt(query, ref_text, mode=mode)
     response = http_client.draw_sample(prompt=prompt)
 
     print(response)
