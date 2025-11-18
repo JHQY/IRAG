@@ -6,7 +6,13 @@ import numpy as np
 
 class Embedder:
     def __init__(self):
-        device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = "cpu"
+        if torch.cuda.is_available():
+            try:
+                _ = torch.randn(1, device="cuda")
+                device = "cuda"
+            except Exception:
+                device = "cpu"
         self.model = SentenceTransformer(settings.EMBEDDING_MODEL_NAME, device=device)
 
     def embed_text(self, texts):
