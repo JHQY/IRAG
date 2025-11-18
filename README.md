@@ -10,6 +10,7 @@
 本项目实现了一个基于 **Milvus 向量数据库 + LangChain 风格接口** 的保险知识库。  
 支持 **PDF 文档解析、表格抽取、向量嵌入与语义检索**。  
 问答模块的同学可直接通过函数调用方式使用 RAG 检索能力。
+同时提供基于 **FastAPI + Vue3** 的 Web 问答前端，支持多轮会话式 RAG 问答与知识库匹配结果可视化。
 
 ---
 
@@ -38,6 +39,10 @@ IRAG/
 ├── scripts/             # 命令行脚本
 │   └── build_index.py   # 构建索引入口
 │
+├── api_server.py        # FastAPI HTTP API + Web 前端服务入口
+├── frontend/            # Web 前端（Vue3 单页问答界面）
+│   └── index.html
+│
 └── sourcepdf/           # 原始保险公司 PDF 文档
     └── AIA/accident/... 等子目录
 ```
@@ -54,6 +59,7 @@ IRAG/
 | CUDA / GPU | 可选（用于加速 embedding） |
 | Milvus     | v2.6.x（Docker 部署）      |
 | uv         | 用于环境与包管理（推荐）   |
+| uvicorn    | 用于启动 FastAPI + Web 前端 |
 
 ---
 
@@ -83,6 +89,14 @@ milvusdb/milvus:v2.6.x   Up   0.0.0.0:19530->19530/tcp
 ```bash
 uv run python
 ```
+
+4. 启动 Web 前端 + 问答 API：
+
+```bash
+uv run python -m uvicorn api_server:app --reload
+```
+
+浏览器访问：<http://127.0.0.1:8000>
 
 ---
 
@@ -230,4 +244,4 @@ A：已使用批量写入（batch_size=500），如仍慢，可调大批量或�
 | 问答接口                 | 孙锐   | llm 调用                     |
 | Prompt 模块              | 张皓然 | prompt调整及切换逻辑         |
 | 数据测试                 |        |                              |
-| 前端开发                 |        |                              |
+| 前端开发                 | 李其键 | Web 前端界面与会话式问答 UI  |
