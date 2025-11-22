@@ -98,6 +98,7 @@ LLM_HOST = "api.bltcy.top"
 LLM_KEY = "sk-Clt5fdhN9xAT9sk2aj6MRCEgF8Zv7ahy3KQP1RK5PqHRGpCP"
 LLM_MODEL = "gpt-4o-mini-2024-07-18"
 http_client = HttpsApi(host=LLM_HOST, key=LLM_KEY, model=LLM_MODEL)
+LLM_CACHE: Dict[str, str] = {}
 
 
 @app.get("/")
@@ -139,8 +140,20 @@ async def ask(req: AskRequest) -> AskResponse:
     ]
     messages = history_messages + [{"role": "user", "content": prompt}]
 
-    # 6) 调用 LLM
-    answer_text = http_client.draw_sample(prompt=messages)
+    # 6) 调用 LLM（带简单缓存：仅在无 history 时缓存同一问题的回答）
+    cache_key = None
+    if not req.history:
+        cache_key = json.dumps(
+            {"q": req.question, "mode": req.mode, "top_k": req.top_k},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+    if cache_key is not None and cache_key in LLM_CACHE:
+        answer_text = LLM_CACHE[cache_key]
+    else:
+        answer_text = http_client.draw_sample(prompt=messages)
+        if cache_key is not None:
+            LLM_CACHE[cache_key] = answer_text
 
     # 7) 返回统一结构
     converted_refs = [RefChunk(**r) for r in results]
